@@ -1,0 +1,19 @@
+{
+    "require": {
+        "php": ">=8.0"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "*"
+    },
+    "autoload": {
+        "psr-4": {
+            "Cw\\LearnBear\\": "src/",
+            "Cw\\Package\\": "package/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Cw\\LearnBear\\": "tests/"
+        }
+    }
+}
