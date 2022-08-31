@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Cw\LearnBear\Resource\Page;
+namespace Cw\LearnBear\Resource\App;
 
 use BEAR\Resource\ResourceInterface;
 use Cw\LearnBear\Injector;
@@ -20,8 +20,8 @@ class IndexTest extends TestCase
 
     public function testOnGet(): void
     {
-        $ro = $this->resource->get('page://self/index', ['year' => 2001, 'month' => 1, 'day' => 1]);
+        $ro = $this->resource->get('app://self/index');
         $this->assertSame(200, $ro->code);
-        $this->assertStringContainsString('Mon', $ro->toString());
+        $this->assertSame('world', $ro->body['hello']);
     }
 }

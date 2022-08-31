@@ -5,17 +5,17 @@ declare(strict_types=1);
 namespace Cw\LearnBear\Resource\Page;
 
 use BEAR\Resource\ResourceObject;
+use BEAR\Sunday\Inject\ResourceInject;
 
 class Index extends ResourceObject
 {
-    /** @var array{greeting: string} */
-    public $body;
+    use ResourceInject;
 
-    /** @return static */
-    public function onGet(string $name = 'BEAR.Sunday'): static
+    public function onGet(int $year, int $month, int $day): static
     {
-        $this->body = [
-            'greeting' => 'Hello ' . $name,
+        $params = ['year' => $year, 'month' => $month, 'day' => $day];
+        $this->body = $params + [
+            'weekday' => $this->resource->get('app://self/weekday', $params),
         ];
 
         return $this;
