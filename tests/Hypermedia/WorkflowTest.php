@@ -10,6 +10,8 @@ use Cw\LearnBear\Injector;
 use PHPUnit\Framework\TestCase;
 use Ray\Di\InjectorInterface;
 
+use function json_decode;
+
 class WorkflowTest extends TestCase
 {
     protected ResourceInterface $resource;
@@ -23,22 +25,22 @@ class WorkflowTest extends TestCase
 
     public function testIndex(): ResourceObject
     {
-        $index = $this->resource->get('/index', ['year' => 2001, 'month' => 1, 'day' => 1]);
+        $index = $this->resource->get('/');
         $this->assertSame(200, $index->code);
 
         return $index;
     }
 
-//    /**
-//     * @depends testIndex
-//     */
-//    public function testRelFoo(ResourceObject $response): ResourceObject
-//    {
-//        $json = (string) $response;
-//        $href = json_decode($json)->_links->{'name:foo'}->href;
-//        $ro = $this->resource->get($href);
-//        $this->assertSame(200, $ro->code);
-//
-//        return $ro;
-//    }
+    /**
+     * @depends testIndex
+     */
+    public function testNext(ResourceObject $index): ResourceObject
+    {
+        $json = (string) $index;
+        $href = json_decode($json)->_links->next->href;
+        $ro = $this->resource->get($href);
+        $this->assertSame(200, $ro->code);
+
+        return $ro;
+    }
 }

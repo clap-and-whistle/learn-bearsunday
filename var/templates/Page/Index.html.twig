@@ -1,5 +1,10 @@
 {% extends 'layout/base.html.twig' %}
 {% block title %}Weekday{% endblock %}
 {% block content %}
-    The weekday of {{ year }}/{{ month }}/{{ day }} is {{ weekday.weekday }}.
+
+    <h1>index</h1>
+    <div>
+        <a id="link_next" href="{{ _links.next.href }}" >next page</a>
+    </div>
+
 {% endblock %}

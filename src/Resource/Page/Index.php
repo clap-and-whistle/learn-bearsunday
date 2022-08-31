@@ -5,17 +5,24 @@ declare(strict_types=1);
 namespace Cw\LearnBear\Resource\Page;
 
 use BEAR\Resource\ResourceObject;
-use BEAR\Sunday\Inject\ResourceInject;
+use DateTime;
 
 class Index extends ResourceObject
 {
-    use ResourceInject;
-
-    public function onGet(int $year, int $month, int $day): static
+    public function onGet(): static
     {
-        $params = ['year' => $year, 'month' => $month, 'day' => $day];
+        // nextページを呼ぶ際に必要となるクエリ文字列（Next::onGet()の引数に相当）を準備
+        $now = new DateTime();
+        $year = $now->format('Y');
+        $month = $now->format('n');
+        $day = $now->format('j');
+        $queryString = "?year={$year}&month={$month}&day={$day}";
+
+        $params = $this->body ?: [];
         $this->body = $params + [
-            'weekday' => $this->resource->get('app://self/weekday', $params),
+            '_links' => [
+                'next' => ['href' => '/next' . $queryString],
+            ],
         ];
 
         return $this;
