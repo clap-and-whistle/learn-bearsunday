@@ -46,10 +46,14 @@
         "cs": "./vendor/bin/phpcs",
         "cs-fix": "./vendor/bin/phpcbf src tests",
         "metrics": "./vendor/bin/phpmetrics --report-html=build/metrics --exclude=Exception src",
+        "twig-clean": [
+            "rm -rf ./var/tmp/*/twig/*"
+        ],
         "clean": [
             "./vendor/bin/phpstan clear-result-cache",
             "./vendor/bin/psalm --clear-cache",
-            "rm -rf ./var/tmp/*.php"
+            "rm -rf ./var/tmp/*.php",
+            "rm -rf ./var/tmp/*/*"
         ],
         "sa": [
             "./vendor/bin/psalm --show-info=true",
