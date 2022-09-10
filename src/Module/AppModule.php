@@ -7,6 +7,8 @@ namespace Cw\LearnBear\Module;
 use BEAR\Dotenv\Dotenv;
 use BEAR\Package\AbstractAppModule;
 use BEAR\Package\PackageModule;
+use Cw\LearnBear\AppSpi\LoggerInterface;
+use Cw\LearnBear\Infrastructure\Logging\DebugLogger;
 
 use function dirname;
 
@@ -16,5 +18,6 @@ class AppModule extends AbstractAppModule
     {
         (new Dotenv())->load(dirname(__DIR__, 2));
         $this->install(new PackageModule());
+        $this->bind(LoggerInterface::class)->to(DebugLogger::class);
     }
 }
