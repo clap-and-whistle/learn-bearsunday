@@ -7,11 +7,16 @@ namespace Cw\LearnBear\Hypermedia;
 use BEAR\Resource\Code;
 use BEAR\Resource\ResourceInterface;
 use BEAR\Resource\ResourceObject;
-use Cw\LearnBear\Injector;
+use Cw\LearnBear\AppSpi\SessionHandlerInterface;
+use Cw\LearnBear\Resource\TestUtil\OverrideModule;
+use Cw\LearnBear\TestInjector;
+use DOMDocument;
 use PHPUnit\Framework\TestCase;
 use Ray\Di\InjectorInterface;
+use RuntimeException;
 
-use function json_decode;
+use function explode;
+use function htmlspecialchars_decode;
 
 class WorkflowTest extends TestCase
 {
@@ -20,8 +25,36 @@ class WorkflowTest extends TestCase
 
     protected function setUp(): void
     {
-        $this->injector = Injector::getInstance('app');
+        $stubSession = $this->createStub(SessionHandlerInterface::class);
+        $stubSession->method('isNotAuthorized')->willReturn(false);
+        OverrideModule::addOrOverrideBind(SessionHandlerInterface::class, $stubSession);
+        $this->injector = TestInjector::getOverrideInstance('html-app', new OverrideModule());
         $this->resource = $this->injector->getInstance(ResourceInterface::class);
+    }
+
+    protected function tearDown(): void
+    {
+        OverrideModule::cleanBinds();
+        parent::tearDown();
+    }
+
+    /**
+     * @return array{path: string, queryStr?: string}
+     * @psalm-return non-empty-list<string>
+     */
+    protected function getLinkUrlFromAtag(string $roStr, string $linkId): array
+    {
+        if (empty($roStr)) {
+            throw new RuntimeException('empty string');
+        }
+
+        $dom = new DOMDocument();
+        $dom->loadHTML($roStr);
+        $href = $dom->getElementById($linkId)?->getAttribute('href');
+
+        return $href
+            ? explode('?', htmlspecialchars_decode($href))
+            : throw new RuntimeException("There is no link: {$linkId}");
     }
 
     public function testIndex(): string
@@ -31,8 +64,15 @@ class WorkflowTest extends TestCase
 
         // 検証
         $this->assertSame(Code::OK, $indexRo->code);
+        $html = $indexRo->toString();
+        $this->assertNotEmpty($html);
 
-        return json_decode((string) $indexRo)->_links->login->href;
+        $dom = new DOMDocument();
+        $dom->loadHTML($html);
+        $formElement = $dom->getElementById('login-form');
+        $this->assertNotNull($formElement);
+
+        return $formElement->getAttribute('action');
     }
 
     /**
@@ -42,7 +82,7 @@ class WorkflowTest extends TestCase
     {
         // 準備
         $inputUsername = 'hogetest';
-        $inputPassword = 'Fuga1234';
+        $inputPassword = 'Fuga.1234';
 
         // 実行
         $loginRo = $this->resource->post($requestPath, ['username' => $inputUsername, 'password' => $inputPassword]);
@@ -50,7 +90,10 @@ class WorkflowTest extends TestCase
         // 検証
         $this->assertSame(Code::SEE_OTHER, $loginRo->code);
 
-        return json_decode((string) $loginRo)->_links->redirect->href;
+        $html = $loginRo->toString();
+        [$path, $queryStr] = $this->getLinkUrlFromAtag($html, 'redirect-to');
+
+        return $path . '?' . $queryStr;
     }
 
     /**
@@ -64,7 +107,12 @@ class WorkflowTest extends TestCase
         // 検証
         $this->assertSame(Code::OK, $nextRo->code);
 
-        return json_decode((string) $nextRo)->_links->logout->href;
+        $html = $nextRo->toString();
+        $this->assertNotEmpty($html);
+
+        [$path] = $this->getLinkUrlFromAtag($html, 'link_logout');
+
+        return $path;
     }
 
     /**
@@ -77,8 +125,12 @@ class WorkflowTest extends TestCase
 
         // 検証
         $this->assertSame(Code::OK, $logoutRo->code);
+        $html = $logoutRo->toString();
+        $this->assertNotEmpty($html);
 
-        return json_decode((string) $logoutRo)->_links->index->href;
+        [$path] = $this->getLinkUrlFromAtag($html, 'link_index');
+
+        return $path;
     }
 
     /**
@@ -91,6 +143,15 @@ class WorkflowTest extends TestCase
 
         // 検証
         $this->assertSame(Code::OK, $ro->code);
+        $html = $ro->toString();
+        $this->assertNotEmpty($html);
+
+        $dom = new DOMDocument();
+        $dom->loadHTML($html);
+        $element = $dom->getElementById('starting-point');
+        $this->assertNotNull($element);
+        $this->assertSame('h1', $element->tagName);
+        $this->assertSame('index', $element->textContent);
 
         return $ro;
     }

@@ -37,7 +37,7 @@ class Login extends ResourceObject
         }
 
         // 認証されたPHPセッションを開始
-        $this->cwSession->setAuth($uuid ?: 'dummy');
+        $this->cwSession->setAuth($uuid);
 
         // nextページを呼ぶ際に必要となるクエリ文字列（Next::onGet()の引数に相当）を準備
         $now = new DateTime();
