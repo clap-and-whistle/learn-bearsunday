@@ -10,10 +10,10 @@ use Cw\LearnBear\Injector;
 use DOMDocument;
 use PHPUnit\Framework\TestCase;
 
-class IndexTest extends TestCase
+class LogoutTest extends TestCase
 {
     private ResourceInterface $resource;
-    private string $linkKey = 'login';
+    private string $linkKey = 'index';
     private string $expectedLinkDestination;
 
     protected function setUp(): void
@@ -27,7 +27,7 @@ class IndexTest extends TestCase
     public function testOnGet(): void
     {
         // 実行
-        $ro = $this->resource->get('page://self/index');
+        $ro = $this->resource->get('page://self/logout');
 
         // 検証
         $this->assertSame(Code::OK, $ro->code);
@@ -42,7 +42,7 @@ class IndexTest extends TestCase
         $resource = $injector->getInstance(ResourceInterface::class);
 
         // 実行
-        $ro = $resource->get('page://self/index');
+        $ro = $resource->get('page://self/logout');
 
         // 検証
         $this->assertSame(Code::OK, $ro->code);
@@ -52,8 +52,10 @@ class IndexTest extends TestCase
 
         $dom = new DOMDocument();
         $dom->loadHTML($htmlContents);
-        $formElement = $dom->getElementById('login-form');
-        $this->assertNotNull($formElement, 'ログインフォームがHTMLに記述されていません');
-        $this->assertSame($this->expectedLinkDestination, $formElement->getAttribute('action'), 'フォームのアクション先URLが期待値と異なります');
+        $element = $dom->getElementById('link_' . $this->linkKey);
+        $this->assertNotNull($element, 'リンクがHTMLに記述されていません');
+        $this->assertSame('a', $element->tagName, 'IndexページへジャンプするAタグの記述がありません');
+        $this->assertSame('index page', $element->textContent, 'Aタグの表示文字列が期待値と異なります');
+        $this->assertSame($this->expectedLinkDestination, $element->getAttribute('href'), 'リンク先が期待値と異なります');
     }
 }

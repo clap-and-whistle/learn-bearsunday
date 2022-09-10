@@ -48,12 +48,15 @@ class WorkflowTest extends Workflow
 
         // 検証
         $this->assertSame(Code::OK, $indexRo->code);
+        $html = $indexRo->toString();
+        $this->assertNotEmpty($html);
 
         $dom = new DOMDocument();
-        $html = $indexRo->toString();
-        $dom->loadHTML(! empty($html) ? $html : throw new RuntimeException('何かがおかしい'));
+        $dom->loadHTML($html);
+        $formElement = $dom->getElementById('login-form');
+        $this->assertNotNull($formElement);
 
-        return $dom->getElementById('login-form')?->getAttribute('action') ?? '';
+        return $formElement->getAttribute('action');
     }
 
     /**
@@ -79,7 +82,7 @@ class WorkflowTest extends Workflow
     /**
      * @depends testLoginAllow
      */
-    public function testNext(string $requestPath): ResourceObject
+    public function testNext(string $requestPath): string
     {
         // 準備
         [$path, $queryStr] = explode('?', $requestPath);
@@ -93,7 +96,52 @@ class WorkflowTest extends Workflow
 
         // 検証
         $this->assertSame(Code::OK, $nextRo->code);
+        $html = $nextRo->toString();
+        $this->assertNotEmpty($html);
 
-        return $nextRo;
+        [$path] = $this->getLinkUrlFromAtag($html, 'link_logout');
+
+        return $path;
+    }
+
+    /**
+     * @depends testNext
+     */
+    public function testLogout(string $requestPath): string
+    {
+        // 実行
+        $logoutRo = $this->resource->get($requestPath);
+
+        // 検証
+        $this->assertSame(Code::OK, $logoutRo->code);
+        $html = $logoutRo->toString();
+        $this->assertNotEmpty($html);
+
+        [$path] = $this->getLinkUrlFromAtag($html, 'link_index');
+
+        return $path;
+    }
+
+    /**
+     * @depends testLogout
+     */
+    public function testReturnIndex(string $requestPath): ResourceObject
+    {
+        // 実行
+        $indexRo = $this->resource->get($requestPath);
+
+        // 検証
+        $this->assertSame(Code::OK, $indexRo->code);
+        $html = $indexRo->toString();
+        $this->assertNotEmpty($html);
+
+        $dom = new DOMDocument();
+        $dom->loadHTML($html);
+        $element = $dom->getElementById('starting-point');
+        $this->assertNotNull($element);
+        $this->assertSame('h1', $element->tagName);
+        $this->assertSame('index', $element->textContent);
+
+        return $indexRo;
     }
 }

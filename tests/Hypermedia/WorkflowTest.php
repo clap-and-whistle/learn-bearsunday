@@ -56,7 +56,35 @@ class WorkflowTest extends TestCase
     /**
      * @depends testLoginAllow
      */
-    public function testNext(string $requestPath): ResourceObject
+    public function testNext(string $requestPath): string
+    {
+        // 実行
+        $nextRo = $this->resource->get($requestPath);
+
+        // 検証
+        $this->assertSame(Code::OK, $nextRo->code);
+
+        return json_decode((string) $nextRo)->_links->logout->href;
+    }
+
+    /**
+     * @depends testNext
+     */
+    public function testLogout(string $requestPath): string
+    {
+        // 実行
+        $logoutRo = $this->resource->get($requestPath);
+
+        // 検証
+        $this->assertSame(Code::OK, $logoutRo->code);
+
+        return json_decode((string) $logoutRo)->_links->index->href;
+    }
+
+    /**
+     * @depends testLogout
+     */
+    public function testReturnIndex(string $requestPath): ResourceObject
     {
         // 実行
         $ro = $this->resource->get($requestPath);

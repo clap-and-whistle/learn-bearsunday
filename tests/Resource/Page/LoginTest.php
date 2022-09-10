@@ -10,7 +10,6 @@ use Cw\LearnBear\Injector;
 use DateTime;
 use DOMDocument;
 use PHPUnit\Framework\TestCase;
-use RuntimeException;
 
 class LoginTest extends TestCase
 {
@@ -61,9 +60,11 @@ class LoginTest extends TestCase
         // 検証
         $this->assertSame(Code::SEE_OTHER, $ro->code);
 
+        $htmlContents = $ro->toString();
+        $this->assertNotEmpty($htmlContents);
+
         $dom = new DOMDocument();
-        $html = $ro->toString();
-        $dom->loadHTML(! empty($html) ? $html : throw new RuntimeException('何かがおかしい'));
+        $dom->loadHTML($htmlContents);
         $metas = $dom->getElementsByTagName('meta');
         $this->assertTrue((bool) $metas->count());
         foreach ($metas as $meta) {
@@ -76,6 +77,7 @@ class LoginTest extends TestCase
         }
 
         $aTag = $dom->getElementById('redirect-to');
-        $this->assertSame($this->expectedRedirectTo, $aTag?->getAttribute('href') ?? '', 'リンク先が期待値と異なります');
+        $this->assertNotNull($aTag, 'NextページへジャンプするAタグの記述がありません');
+        $this->assertSame($this->expectedRedirectTo, $aTag->getAttribute('href'), 'リンク先が期待値と異なります');
     }
 }

@@ -17,7 +17,7 @@ class Next extends ResourceObject
         $this->body = $params + [
             'weekday' => $this->resource->get('app://self/weekday', $params),
             '_links' => [
-                'index' => ['href' => '/index'],
+                'logout' => ['href' => '/logout'],
             ],
         ];
 
