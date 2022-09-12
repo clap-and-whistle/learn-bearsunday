@@ -2,10 +2,6 @@
 {% block title %}Weekday{% endblock %}
 {% block content %}
 
-    {% if debug is defined %}
-        <pre>{{ debug }}</pre>
-    {% endif %}
-
     <h1>next</h1>
     <div>The weekday of {{ year }}/{{ month }}/{{ day }} is {{ weekday.weekday }}.</div>
     <div>

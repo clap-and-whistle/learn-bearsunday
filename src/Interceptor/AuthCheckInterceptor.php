@@ -11,7 +11,8 @@ use Cw\LearnBear\Resource\AuthBaseResourceObject;
 use Ray\Aop\MethodInterceptor;
 use Ray\Aop\MethodInvocation;
 use Ray\Di\Di\Named;
-use RuntimeException;
+
+use function assert;
 
 class AuthCheckInterceptor implements MethodInterceptor
 {
@@ -26,14 +27,11 @@ class AuthCheckInterceptor implements MethodInterceptor
      */
     public function invoke(MethodInvocation $invocation)
     {
-        $resourceObject = $invocation->getThis();
-        if (! $resourceObject instanceof AuthBaseResourceObject) {
-            // TODO: 後で消す（インターセプタ束縛を matcher->any() で設定してるところを直すときに）
-            throw new RuntimeException('AuthBaseResourceObject にだけ使用できるインターセプターです');
-        }
-
         // メソッド実行前の処理
         if ($this->cwSession->isNotAuthorized()) {
+            $resourceObject = $invocation->getThis();
+            assert($resourceObject instanceof AuthBaseResourceObject);
+
             return $this->makeError($resourceObject);
         }
 
@@ -41,7 +39,6 @@ class AuthCheckInterceptor implements MethodInterceptor
         $result = $invocation->proceed();
 
         // メソッド実行後の処理
-        // TODO: 後で消す
         if ($result instanceof AuthBaseResourceObject) {
             $result->setDebugMessage('認証済み確認後の処理を通過');
         }
