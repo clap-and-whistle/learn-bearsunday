@@ -5,21 +5,17 @@ declare(strict_types=1);
 namespace Cw\LearnBear\Interceptor;
 
 use BEAR\Resource\Code;
-use BEAR\Resource\RenderInterface;
 use Cw\LearnBear\AppSpi\SessionHandlerInterface;
-use Cw\LearnBear\Resource\AuthBaseResourceObject;
+use Cw\LearnBear\Infrastructure\Resource\AuthBaseResourceObject;
 use Ray\Aop\MethodInterceptor;
 use Ray\Aop\MethodInvocation;
-use Ray\Di\Di\Named;
 
 use function assert;
 
 class AuthCheckInterceptor implements MethodInterceptor
 {
-    public function __construct(
-        private readonly SessionHandlerInterface $cwSession,
-        #[Named('error_page')] private readonly RenderInterface $errorRenderer
-    ) {
+    public function __construct(private readonly SessionHandlerInterface $cwSession)
+    {
     }
 
     /**
@@ -48,7 +44,7 @@ class AuthCheckInterceptor implements MethodInterceptor
 
     private function makeError(AuthBaseResourceObject $resourceObj): AuthBaseResourceObject
     {
-        $resourceObj->setRenderer($this->errorRenderer);
+        $resourceObj->setRendererForError();
         $resourceObj->code = Code::UNAUTHORIZED;
         $resourceObj->body = [
             'status' => [

@@ -9,8 +9,8 @@ use Cw\LearnBear\AppSpi\IdentityRepositoryInterface;
 use Cw\LearnBear\AppSpi\SessionHandlerInterface;
 use Cw\LearnBear\Infrastructure\Authentication\CwSession;
 use Cw\LearnBear\Infrastructure\Authentication\IdentityRepository;
+use Cw\LearnBear\Infrastructure\Resource\AuthBaseResourceObject;
 use Cw\LearnBear\Interceptor\AuthCheckInterceptor;
-use Cw\LearnBear\Resource\AuthBaseResourceObject;
 use Ray\Di\AbstractModule;
 
 class CwAuthModule extends AbstractModule

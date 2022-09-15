@@ -6,7 +6,7 @@ namespace Cw\LearnBear\Resource\Page;
 
 use BEAR\Sunday\Inject\ResourceInject;
 use Cw\LearnBear\Annotation\CheckAuth;
-use Cw\LearnBear\Resource\AuthBaseResourceObject;
+use Cw\LearnBear\Infrastructure\Resource\AuthBaseResourceObject;
 
 class Next extends AuthBaseResourceObject
 {
