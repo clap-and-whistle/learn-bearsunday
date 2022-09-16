@@ -2,8 +2,20 @@
 {% block title %}Weekday{% endblock %}
 {% block content %}
 
-    <h1>next</h1>
     <div>The weekday of {{ year }}/{{ month }}/{{ day }} is {{ weekday.weekday }}.</div>
+    <h1>TODO入力</h1>
+    <div class="row">
+        <div class="col-sm-8"></div>
+        <div class="col-sm-4">
+            <div class="panel panel-default">
+                <div class="panel-heading">新規作成</div>
+                <div class="panel-body">
+                    {{ todo_form|raw }}
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div>
         <a id="link_logout" href="{{ _links.logout.href }}" >ログアウトする</a>
     </div>
