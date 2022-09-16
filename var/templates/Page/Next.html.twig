@@ -5,7 +5,44 @@
     <div>The weekday of {{ year }}/{{ month }}/{{ day }} is {{ weekday.weekday }}.</div>
     <h1>TODO入力</h1>
     <div class="row">
-        <div class="col-sm-8"></div>
+        <div class="col-sm-8">
+            <div class="panel panel-default">
+                <div class="panel-heading">タスク一覧</div>
+                <div class="panel-body">
+                    {% if todo_list %}
+                        <table class="table">
+                            <thead>
+                            <tr>
+                                <th>Id</th>
+                                <th>Title</th>
+                                <th>CreatedAt</th>
+                                <th> </th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            {% for todo in todo_list %}
+                                <tr>
+                                    <td>{{ todo.id }}</td>
+                                    <td>{{ todo.title }}</td>
+                                    <td>{{ todo.createdAt|date("Y/m/d H:i:s") }}</td>
+                                    <td>
+                                        {% if todo.status == 1 %}
+                                            <a class="btn btn-danger" href="">Done</a>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                            </tbody>
+                        </table>
+
+                    {% else %}
+                        <div class="panel-body">
+                            <p>タスクがありません</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
         <div class="col-sm-4">
             <div class="panel panel-default">
                 <div class="panel-heading">新規作成</div>

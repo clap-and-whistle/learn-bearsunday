@@ -35,6 +35,7 @@ class Next extends AuthBaseResourceObject
         $this->body = $params + [
             'weekday' => $this->resource->get('app://self/weekday', $params),
             'todo_form' => $this->todoForm,
+            'todo_list' => $this->resource->get('app://self/todo-list'),
             '_links' => [
                 'logout' => ['href' => '/logout'],
             ],
