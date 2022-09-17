@@ -6,27 +6,18 @@ namespace Cw\LearnBear\Resource\Page;
 
 use BEAR\Resource\ResourceInterface;
 use Cw\LearnBear\Injector;
-use DateTime;
 use DOMDocument;
 use PHPUnit\Framework\TestCase;
 
 class IndexTest extends TestCase
 {
     private ResourceInterface $resource;
-    private string $linkKey = 'next';
-    private string $hrefStr;
+    private string $linkKey = 'login';
 
     protected function setUp(): void
     {
         $injector = Injector::getInstance('app');
         $this->resource = $injector->getInstance(ResourceInterface::class);
-
-        $now = new DateTime();
-        $expectedQueryStr =
-              'year=' . $now->format('Y')     // 年。4 桁の数字。
-            . '&month=' . $now->format('n')   // 月。数字。先頭にゼロをつけない。
-            . '&day=' . $now->format('j');    // 日。先頭にゼロをつけない。
-        $this->hrefStr = "/{$this->linkKey}?" . $expectedQueryStr;
     }
 
     public function testOnGet(): void
@@ -37,7 +28,7 @@ class IndexTest extends TestCase
         // 検証
         $this->assertSame(200, $ro->code);
         $this->assertArrayHasKey($this->linkKey, $ro->body['_links']);
-        $this->assertStringContainsString($this->hrefStr, $ro->body['_links'][$this->linkKey]['href']);
+        $this->assertSame("/{$this->linkKey}", $ro->body['_links'][$this->linkKey]['href']);
     }
 
     public function testOnGetHtml(): void
@@ -57,9 +48,8 @@ class IndexTest extends TestCase
 
         $dom = new DOMDocument();
         $dom->loadHTML($htmlContents);
-        $element = $dom->getElementById('link_' . $this->linkKey);
-        $this->assertSame('next page', $element?->nodeValue);
-        $this->assertSame('a', $element?->tagName);
-        $this->assertSame($this->hrefStr, $element?->getAttribute('href'));
+        $formElement = $dom->getElementById('login-form');
+        $this->assertNotNull($formElement, 'ログインフォームがHTMLに記述されていません');
+        $this->assertSame("/{$this->linkKey}", $formElement->getAttribute('action'), 'フォームのアクション先URLが期待値と異なります');
     }
 }

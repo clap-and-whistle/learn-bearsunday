@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Cw\LearnBear\Hypermedia;
 
+use BEAR\Resource\Code;
 use BEAR\Resource\ResourceInterface;
 use BEAR\Resource\ResourceObject;
 use Cw\LearnBear\Injector;
@@ -23,23 +24,45 @@ class WorkflowTest extends TestCase
         $this->resource = $this->injector->getInstance(ResourceInterface::class);
     }
 
-    public function testIndex(): ResourceObject
+    public function testIndex(): string
     {
-        $index = $this->resource->get('/');
-        $this->assertSame(200, $index->code);
+        // 実行
+        $indexRo = $this->resource->get('/');
 
-        return $index;
+        // 検証
+        $this->assertSame(Code::OK, $indexRo->code);
+
+        return json_decode((string) $indexRo)->_links->login->href;
     }
 
     /**
      * @depends testIndex
      */
-    public function testNext(ResourceObject $index): ResourceObject
+    public function testLoginAllow(string $requestPath): string
     {
-        $json = (string) $index;
-        $href = json_decode($json)->_links->next->href;
-        $ro = $this->resource->get($href);
-        $this->assertSame(200, $ro->code);
+        // 準備
+        $inputUsername = 'hogetest';
+        $inputPassword = 'Fuga1234';
+
+        // 実行
+        $loginRo = $this->resource->post($requestPath, ['username' => $inputUsername, 'password' => $inputPassword]);
+
+        // 検証
+        $this->assertSame(Code::SEE_OTHER, $loginRo->code);
+
+        return json_decode((string) $loginRo)->_links->redirect->href;
+    }
+
+    /**
+     * @depends testLoginAllow
+     */
+    public function testNext(string $requestPath): ResourceObject
+    {
+        // 実行
+        $ro = $this->resource->get($requestPath);
+
+        // 検証
+        $this->assertSame(Code::OK, $ro->code);
 
         return $ro;
     }

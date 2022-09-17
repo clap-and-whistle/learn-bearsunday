@@ -4,7 +4,11 @@
 
     <h1>index</h1>
     <div>
-        <a id="link_next" href="{{ _links.next.href }}" >next page</a>
+        <form id="login-form" action="{{ _links.login.href }}" method="post">
+            <label for="username">ユーザー名</label><input id="username" type="text" name="username" value="" />
+            <label for="password">パスワード</label><input id="password" type="password" name="password" value="" />
+            <button type="submit">送信</button>
+        </form>
     </div>
 
 {% endblock %}
