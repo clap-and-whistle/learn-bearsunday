@@ -3,6 +3,9 @@
 {% block content %}
 
     <h1 id="starting-point">index</h1>
+    {% if flash_message is defined %}
+        <pre id="flash-message">{{ flash_message }}</pre>
+    {% endif %}
     <div>
         <form id="login-form" action="{{ _links.login.href }}" method="post">
             <label for="username">ユーザー名</label><input id="username" type="text" name="username" value="" />
