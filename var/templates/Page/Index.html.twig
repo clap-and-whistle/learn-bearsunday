@@ -2,9 +2,16 @@
 {% block title %}Weekday{% endblock %}
 {% block content %}
 
-    <h1>index</h1>
+    <h1 id="starting-point">index</h1>
+    {% if flash_message is defined %}
+        <pre id="flash-message">{{ flash_message }}</pre>
+    {% endif %}
     <div>
-        <a id="link_next" href="{{ _links.next.href }}" >next page</a>
+        <form id="login-form" action="{{ _links.login.href }}" method="post">
+            <label for="username">ユーザー名</label><input id="username" type="text" name="username" value="" />
+            <label for="password">パスワード</label><input id="password" type="password" name="password" value="" />
+            <button type="submit">送信</button>
+        </form>
     </div>
 
 {% endblock %}

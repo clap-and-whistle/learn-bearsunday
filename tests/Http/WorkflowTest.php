@@ -5,14 +5,9 @@ declare(strict_types=1);
 namespace Cw\LearnBear\Http;
 
 use BEAR\Dev\Http\HttpResource;
-use BEAR\Resource\ResourceObject;
+use BEAR\Resource\Code;
 use Cw\LearnBear\Hypermedia\WorkflowTest as Workflow;
-use DOMDocument;
-use RuntimeException;
-
-use function explode;
-use function htmlspecialchars_decode;
-use function parse_str;
+use DateTime;
 
 class WorkflowTest extends Workflow
 {
@@ -22,38 +17,27 @@ class WorkflowTest extends Workflow
     }
 
     /**
-     * @return array{path: string, queryStr?: string}
-     * @psalm-return non-empty-list<string>
-     */
-    private function getLinkUrl(string $roStr, string $linkId): array
-    {
-        if (empty($roStr)) {
-            throw new RuntimeException('empty string');
-        }
-
-        $dom = new DOMDocument();
-        $dom->loadHTML($roStr);
-        $href = $dom->getElementById($linkId)?->getAttribute('href');
-
-        return $href
-            ? explode('?', htmlspecialchars_decode($href))
-            : throw new RuntimeException("There is no link: {$linkId}");
-    }
-
-    /**
      * @depends testIndex
      */
-    public function testNext(ResourceObject $index): ResourceObject
+    public function testLoginAllow(string $requestPath): string
     {
-        [$path, $queryStr] = $this->getLinkUrl($index->toString(), 'link_next');
-        $queryArray = [];
-        if ($queryStr) {
-            parse_str($queryStr, $queryArray);
-        }
+        // 準備
+        $inputUsername = 'hogetest';
+        $inputPassword = 'Fuga.1234';
 
-        $next = $this->resource->get($path, $queryArray);
-        $this->assertSame(200, $next->code);
+        // 実行
+        $loginRo = $this->resource->post($requestPath, ['username' => $inputUsername, 'password' => $inputPassword]);
 
-        return $next;
+        // 検証
+        // note: Loginリソースの結果ではなく、リダイレクトまで済んだ結果(つまりNextリソースの結果が返されている)
+        $this->assertSame(Code::OK, $loginRo->code);
+
+        // note: そのため、継承元Workflowにて続くテストケースへ引き渡す string $requestPath を手動生成して返さねばならない
+        $now = new DateTime();
+
+        return '/next'
+            . '?year=' . $now->format('Y')
+            . '&month=' . $now->format('n')
+            . '&day=' . $now->format('j');
     }
 }

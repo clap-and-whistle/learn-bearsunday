@@ -5,25 +5,33 @@ declare(strict_types=1);
 namespace Cw\LearnBear\Resource\Page;
 
 use BEAR\Resource\ResourceObject;
-use DateTime;
+use Cw\LearnBear\AppSpi\LoggerInterface;
+use Cw\LearnBear\AppSpi\SessionHandlerInterface;
+
+use function var_export;
 
 class Index extends ResourceObject
 {
+    public function __construct(
+        private readonly LoggerInterface $logger,
+        private readonly SessionHandlerInterface $cwSession,
+    ) {
+    }
+
     public function onGet(): static
     {
-        // nextページを呼ぶ際に必要となるクエリ文字列（Next::onGet()の引数に相当）を準備
-        $now = new DateTime();
-        $year = $now->format('Y');
-        $month = $now->format('n');
-        $day = $now->format('j');
-        $queryString = "?year={$year}&month={$month}&day={$day}";
-
+        $flashMsg = $this->cwSession->getFlashMessage(SessionHandlerInterface::FLASH_KEY_FOR_LOGIN_FORM);
         $params = $this->body ?: [];
+        if ($flashMsg) {
+            $params['flash_message'] = $flashMsg;
+        }
+
         $this->body = $params + [
             '_links' => [
-                'next' => ['href' => '/next' . $queryString],
+                'login' => ['href' => '/login'],
             ],
         ];
+        $this->logger->log(var_export([__METHOD__ . ': body' => $this->body], true));
 
         return $this;
     }

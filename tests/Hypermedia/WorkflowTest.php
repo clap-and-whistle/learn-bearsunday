@@ -4,13 +4,19 @@ declare(strict_types=1);
 
 namespace Cw\LearnBear\Hypermedia;
 
+use BEAR\Resource\Code;
 use BEAR\Resource\ResourceInterface;
 use BEAR\Resource\ResourceObject;
-use Cw\LearnBear\Injector;
+use Cw\LearnBear\AppSpi\SessionHandlerInterface;
+use Cw\LearnBear\Resource\TestUtil\OverrideModule;
+use Cw\LearnBear\TestInjector;
+use DOMDocument;
 use PHPUnit\Framework\TestCase;
 use Ray\Di\InjectorInterface;
+use RuntimeException;
 
-use function json_decode;
+use function explode;
+use function htmlspecialchars_decode;
 
 class WorkflowTest extends TestCase
 {
@@ -19,27 +25,133 @@ class WorkflowTest extends TestCase
 
     protected function setUp(): void
     {
-        $this->injector = Injector::getInstance('app');
+        $stubSession = $this->createStub(SessionHandlerInterface::class);
+        $stubSession->method('isNotAuthorized')->willReturn(false);
+        OverrideModule::addOrOverrideBind(SessionHandlerInterface::class, $stubSession);
+        $this->injector = TestInjector::getOverrideInstance('html-app', new OverrideModule());
         $this->resource = $this->injector->getInstance(ResourceInterface::class);
     }
 
-    public function testIndex(): ResourceObject
+    protected function tearDown(): void
     {
-        $index = $this->resource->get('/');
-        $this->assertSame(200, $index->code);
+        OverrideModule::cleanBinds();
+        parent::tearDown();
+    }
 
-        return $index;
+    /**
+     * @return array{path: string, queryStr?: string}
+     * @psalm-return non-empty-list<string>
+     */
+    protected function getLinkUrlFromAtag(string $roStr, string $linkId): array
+    {
+        if (empty($roStr)) {
+            throw new RuntimeException('empty string');
+        }
+
+        $dom = new DOMDocument();
+        $dom->loadHTML($roStr);
+        $href = $dom->getElementById($linkId)?->getAttribute('href');
+
+        return $href
+            ? explode('?', htmlspecialchars_decode($href))
+            : throw new RuntimeException("There is no link: {$linkId}");
+    }
+
+    public function testIndex(): string
+    {
+        // 実行
+        $indexRo = $this->resource->get('/');
+
+        // 検証
+        $this->assertSame(Code::OK, $indexRo->code);
+        $html = $indexRo->toString();
+        $this->assertNotEmpty($html);
+
+        $dom = new DOMDocument();
+        $dom->loadHTML($html);
+        $formElement = $dom->getElementById('login-form');
+        $this->assertNotNull($formElement);
+
+        return $formElement->getAttribute('action');
     }
 
     /**
      * @depends testIndex
      */
-    public function testNext(ResourceObject $index): ResourceObject
+    public function testLoginAllow(string $requestPath): string
     {
-        $json = (string) $index;
-        $href = json_decode($json)->_links->next->href;
-        $ro = $this->resource->get($href);
-        $this->assertSame(200, $ro->code);
+        // 準備
+        $inputUsername = 'hogetest';
+        $inputPassword = 'Fuga.1234';
+
+        // 実行
+        $loginRo = $this->resource->post($requestPath, ['username' => $inputUsername, 'password' => $inputPassword]);
+
+        // 検証
+        $this->assertSame(Code::SEE_OTHER, $loginRo->code);
+
+        $html = $loginRo->toString();
+        [$path, $queryStr] = $this->getLinkUrlFromAtag($html, 'redirect-to');
+
+        return $path . '?' . $queryStr;
+    }
+
+    /**
+     * @depends testLoginAllow
+     */
+    public function testNext(string $requestPath): string
+    {
+        // 実行
+        $nextRo = $this->resource->get($requestPath);
+
+        // 検証
+        $this->assertSame(Code::OK, $nextRo->code);
+
+        $html = $nextRo->toString();
+        $this->assertNotEmpty($html);
+
+        [$path] = $this->getLinkUrlFromAtag($html, 'link_logout');
+
+        return $path;
+    }
+
+    /**
+     * @depends testNext
+     */
+    public function testLogout(string $requestPath): string
+    {
+        // 実行
+        $logoutRo = $this->resource->get($requestPath);
+
+        // 検証
+        $this->assertSame(Code::OK, $logoutRo->code);
+        $html = $logoutRo->toString();
+        $this->assertNotEmpty($html);
+
+        [$path] = $this->getLinkUrlFromAtag($html, 'link_index');
+
+        return $path;
+    }
+
+    /**
+     * @depends testLogout
+     */
+    public function testReturnIndex(string $requestPath): ResourceObject
+    {
+        // 実行
+        $ro = $this->resource->get($requestPath);
+
+        // 検証
+        $this->assertSame(Code::OK, $ro->code);
+        $html = $ro->toString();
+        $this->assertNotEmpty($html);
+
+        $dom = new DOMDocument();
+        $dom->loadHTML($html);
+        $element = $dom->getElementById('starting-point');
+        $this->assertNotNull($element);
+        $this->assertSame('h1', $element->tagName);
+        $this->assertSame('index', $element->textContent);
 
         return $ro;
     }

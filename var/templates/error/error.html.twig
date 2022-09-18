@@ -2,7 +2,9 @@
 {% block title %}{{ status.code }} {{ status.message }}{% endblock %}
 {% block content %}
     <h1>{{ status.code }} {{ status.message }}</h1>
-    {% if status.code == 404 %}
+    {% if status.code == 401 %}
+        <p class="lead">The requested URL was unauthorized.</p>
+    {% elseif status.code == 404 %}
         <p class="lead">The requested URL was not found on this server.</p>
     {% elseif status.code == 500 %}
         <p class="lead">The server encountered an internal error.</p>
