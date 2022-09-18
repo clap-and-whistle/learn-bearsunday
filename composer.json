@@ -10,15 +10,20 @@
         "bear/package": "^1.12.1",
         "bear/resource": "^1.16",
         "bear/sunday": "^1.5",
+        "madapaja/twig-module": "^2.3",
         "ray/aop": "^2.11",
-        "ray/di": "^2.13"
+        "ray/aura-session-module": "^1.1",
+        "ray/aura-web-module": "^0.1.0",
+        "ray/di": "^2.13",
+        "ray/web-form-module": "^0.6.0"
     },
     "require-dev": {
         "bear/api-doc": "1.x-dev",
         "bear/devtools": "^0.1",
         "bamarni/composer-bin-plugin": "^1.4",
         "phpunit/phpunit": "^9.5",
-        "roave/security-advisories": "dev-latest"
+        "roave/security-advisories": "dev-latest",
+        "ext-dom": "*"
     },
     "autoload": {
         "psr-4": {
@@ -42,10 +47,14 @@
         "cs": "./vendor/bin/phpcs",
         "cs-fix": "./vendor/bin/phpcbf src tests",
         "metrics": "./vendor/bin/phpmetrics --report-html=build/metrics --exclude=Exception src",
+        "twig-clean": [
+            "rm -rf ./var/tmp/*/twig/*"
+        ],
         "clean": [
             "./vendor/bin/phpstan clear-result-cache",
             "./vendor/bin/psalm --clear-cache",
-            "rm -rf ./var/tmp/*.php"
+            "rm -rf ./var/tmp/*.php",
+            "rm -rf ./var/tmp/*/*"
         ],
         "sa": [
             "./vendor/bin/psalm --show-info=true",
@@ -90,7 +99,8 @@
         "sort-packages": true,
         "process-timeout": 0,
         "allow-plugins": {
-            "bamarni/composer-bin-plugin": true
+            "bamarni/composer-bin-plugin": true,
+            "aura/installer-default": true
         }
     }
 }
