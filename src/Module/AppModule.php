@@ -9,6 +9,7 @@ use BEAR\Package\AbstractAppModule;
 use BEAR\Package\PackageModule;
 use Cw\LearnBear\AppSpi\LoggerInterface;
 use Cw\LearnBear\Infrastructure\Logging\DebugLogger;
+use Ray\AuraSqlModule\AuraSqlModule;
 
 use function dirname;
 
@@ -20,6 +21,9 @@ class AppModule extends AbstractAppModule
         $this->install(new PackageModule());
         $this->install(new CwAuthModule());
         $this->install(new HtmlModule());
+        $appDir = $this->appMeta->appDir;
+        $dbConfig = 'sqlite:' . $appDir . '/var/db/todo.sqlite3';
+        $this->install(new AuraSqlModule($dbConfig));
         $this->bind(LoggerInterface::class)->to(DebugLogger::class);
     }
 }

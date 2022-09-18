@@ -8,10 +8,12 @@ use BEAR\Resource\Code;
 use BEAR\Resource\ResourceObject;
 use Cw\LearnBear\AppSpi\IdentityRepositoryInterface;
 use Cw\LearnBear\AppSpi\SessionHandlerInterface;
-use DateTime;
+use Cw\LearnBear\Infrastructure\Form\QueryForNext;
 
 class Login extends ResourceObject
 {
+    use QueryForNext;
+
     public function __construct(
         private readonly SessionHandlerInterface $cwSession,
         private readonly IdentityRepositoryInterface $identityRepository,
@@ -40,11 +42,7 @@ class Login extends ResourceObject
         $this->cwSession->setAuth($uuid);
 
         // nextページを呼ぶ際に必要となるクエリ文字列（Next::onGet()の引数に相当）を準備
-        $now = new DateTime();
-        $year = $now->format('Y');
-        $month = $now->format('n');
-        $day = $now->format('j');
-        $queryString = "?year={$year}&month={$month}&day={$day}";
+        $queryString = $this->getQueryStrForNext();
 
         $toUrl = '/next' . $queryString;
         $this->code = Code::SEE_OTHER;
