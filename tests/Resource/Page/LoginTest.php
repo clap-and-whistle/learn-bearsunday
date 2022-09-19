@@ -27,6 +27,7 @@ class LoginTest extends TestCase
             public function __construct(
                 private readonly SessionHandlerInterface $sessionHandlerStub
             ) {
+                parent::__construct();
             }
 
             protected function configure(): void
