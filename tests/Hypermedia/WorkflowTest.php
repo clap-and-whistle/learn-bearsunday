@@ -8,11 +8,10 @@ use BEAR\Resource\Code;
 use BEAR\Resource\ResourceInterface;
 use BEAR\Resource\ResourceObject;
 use Cw\LearnBear\AppSpi\SessionHandlerInterface;
-use Cw\LearnBear\Resource\TestUtil\OverrideModule;
-use Cw\LearnBear\TestInjector;
+use Cw\LearnBear\Injector;
 use DOMDocument;
 use PHPUnit\Framework\TestCase;
-use Ray\Di\InjectorInterface;
+use Ray\Di\AbstractModule;
 use RuntimeException;
 
 use function explode;
@@ -21,21 +20,23 @@ use function htmlspecialchars_decode;
 class WorkflowTest extends TestCase
 {
     protected ResourceInterface $resource;
-    protected InjectorInterface $injector;
 
     protected function setUp(): void
     {
         $stubSession = $this->createStub(SessionHandlerInterface::class);
         $stubSession->method('isNotAuthorized')->willReturn(false);
-        OverrideModule::addOrOverrideBind(SessionHandlerInterface::class, $stubSession);
-        $this->injector = TestInjector::getOverrideInstance('html-app', new OverrideModule());
-        $this->resource = $this->injector->getInstance(ResourceInterface::class);
-    }
+        $injector = Injector::getOverrideInstance('html-app', new class ($stubSession) extends AbstractModule{
+            public function __construct(
+                private readonly SessionHandlerInterface $sessionHandlerStub
+            ) {
+            }
 
-    protected function tearDown(): void
-    {
-        OverrideModule::cleanBinds();
-        parent::tearDown();
+            protected function configure(): void
+            {
+                $this->bind(SessionHandlerInterface::class)->toInstance($this->sessionHandlerStub);
+            }
+        });
+        $this->resource = $injector->getInstance(ResourceInterface::class);
     }
 
     /**
