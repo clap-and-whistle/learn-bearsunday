@@ -6,7 +6,7 @@ namespace Cw\LearnBear\Resource\Page;
 
 use BEAR\Resource\Code;
 use BEAR\Resource\ResourceInterface;
-use Cw\LearnBear\TestInjector;
+use Cw\LearnBear\Injector;
 use DOMDocument;
 use PHPUnit\Framework\TestCase;
 
@@ -18,7 +18,7 @@ class LogoutTest extends TestCase
 
     protected function setUp(): void
     {
-        $injector = TestInjector::getInstance('app');
+        $injector = Injector::getInstance('app');
         $this->resource = $injector->getInstance(ResourceInterface::class);
 
         $this->expectedLinkDestination = "/{$this->linkKey}";
@@ -38,7 +38,7 @@ class LogoutTest extends TestCase
     public function testOnGetHtml(): void
     {
         // 準備
-        $injector = TestInjector::getInstance('html-app');
+        $injector = Injector::getInstance('html-app');
         $resource = $injector->getInstance(ResourceInterface::class);
 
         // 実行

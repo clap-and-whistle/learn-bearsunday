@@ -7,10 +7,10 @@ namespace Cw\LearnBear\Resource\Page;
 use BEAR\Resource\Code;
 use BEAR\Resource\ResourceInterface;
 use Cw\LearnBear\AppSpi\SessionHandlerInterface;
-use Cw\LearnBear\Resource\TestUtil\OverrideModule;
-use Cw\LearnBear\TestInjector;
+use Cw\LearnBear\Injector;
 use DOMDocument;
 use PHPUnit\Framework\TestCase;
+use Ray\Di\AbstractModule;
 
 class NextTest extends TestCase
 {
@@ -24,12 +24,6 @@ class NextTest extends TestCase
         $this->expectedLinkDestination = "/{$this->linkKey}";
     }
 
-    protected function tearDown(): void
-    {
-        OverrideModule::cleanBinds();
-        parent::tearDown();
-    }
-
     /**
      * @psalm-suppress UndefinedInterfaceMethod
      */
@@ -38,8 +32,19 @@ class NextTest extends TestCase
         // 準備
         // @phpstan-ignore-next-line
         $this->stubSession->method('isNotAuthorized')->willReturn(false);
-        OverrideModule::addOrOverrideBind(SessionHandlerInterface::class, $this->stubSession);
-        $injector = TestInjector::getOverrideInstance('html-app', new OverrideModule());
+        $injector = Injector::getOverrideInstance('html-app', new class ($this->stubSession) extends AbstractModule{
+            public function __construct(
+                private readonly SessionHandlerInterface $sessionHandlerStub
+            ) {
+                parent::__construct();
+            }
+
+            protected function configure(): void
+            {
+                $this->bind(SessionHandlerInterface::class)->toInstance($this->sessionHandlerStub);
+            }
+        });
+
         $resource = $injector->getInstance(ResourceInterface::class);
 
         // 実行
@@ -67,7 +72,7 @@ class NextTest extends TestCase
     public function testOnGetHtml_未認証(): void
     {
         // 準備
-        $injector = TestInjector::getInstance('html-app');
+        $injector = Injector::getInstance('html-app');
         $resource = $injector->getInstance(ResourceInterface::class);
 
         // 実行
