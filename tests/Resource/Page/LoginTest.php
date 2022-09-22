@@ -12,37 +12,10 @@ use DateTime;
 use DOMDocument;
 use PHPUnit\Framework\TestCase;
 use Ray\Di\AbstractModule;
-use Ray\Di\InjectorInterface;
 
 class LoginTest extends TestCase
 {
-    private InjectorInterface $injector;
     private string $linkKey = 'next';
-    private string $expectedRedirectTo;
-
-    public function setUp(): void
-    {
-        $stubSession = $this->createStub(SessionHandlerInterface::class);
-        $this->injector = Injector::getOverrideInstance('html-app', new class ($stubSession) extends AbstractModule{
-            public function __construct(
-                private readonly SessionHandlerInterface $sessionHandlerStub
-            ) {
-                parent::__construct();
-            }
-
-            protected function configure(): void
-            {
-                $this->bind(SessionHandlerInterface::class)->toInstance($this->sessionHandlerStub);
-            }
-        });
-
-        $now = new DateTime();
-        $expectedQueryStr =
-            'year=' . $now->format('Y')     // 年。4 桁の数字。
-            . '&month=' . $now->format('n')   // 月。数字。先頭にゼロをつけない。
-            . '&day=' . $now->format('j');    // 日。先頭にゼロをつけない。
-        $this->expectedRedirectTo = "/{$this->linkKey}?" . $expectedQueryStr;
-    }
 
     /**
      * @return array<string, mixed>
@@ -63,7 +36,28 @@ class LoginTest extends TestCase
     public function testOnPostHtml(string $username, string $password): void
     {
         // 準備
-        $resource = $this->injector->getInstance(ResourceInterface::class);
+        $sessionHandlerStub = $this->createStub(SessionHandlerInterface::class);
+        $injector = Injector::getOverrideInstance('html-app', new class ($sessionHandlerStub) extends AbstractModule{
+            public function __construct(
+                private readonly SessionHandlerInterface $sessionHandlerStub
+            ) {
+                parent::__construct();
+            }
+
+            protected function configure(): void
+            {
+                $this->bind(SessionHandlerInterface::class)->toInstance($this->sessionHandlerStub);
+            }
+        });
+
+        $resource = $injector->getInstance(ResourceInterface::class);
+
+        $now = new DateTime();
+        $expectedQueryStr =
+            'year=' . $now->format('Y')     // 年。4 桁の数字。
+            . '&month=' . $now->format('n')   // 月。数字。先頭にゼロをつけない。
+            . '&day=' . $now->format('j');    // 日。先頭にゼロをつけない。
+        $expectedRedirectTo = "/{$this->linkKey}?" . $expectedQueryStr;
 
         // 実行
         $ro = $resource->post('page://self/login', ['username' => $username, 'password' => $password]);
@@ -84,12 +78,12 @@ class LoginTest extends TestCase
                 continue;
             }
 
-            $this->assertStringContainsString($this->expectedRedirectTo, $content, 'METAタグのリダイレクト先が期待値と異なります');
+            $this->assertStringContainsString($expectedRedirectTo, $content, 'METAタグのリダイレクト先が期待値と異なります');
         }
 
         $aTag = $dom->getElementById('redirect-to');
         $this->assertNotNull($aTag, 'NextページへジャンプするAタグの記述がありません');
-        $this->assertSame($this->expectedRedirectTo, $aTag->getAttribute('href'), 'リンク先が期待値と異なります');
+        $this->assertSame($expectedRedirectTo, $aTag->getAttribute('href'), 'リンク先が期待値と異なります');
     }
 
     /**
@@ -108,18 +102,33 @@ class LoginTest extends TestCase
     /**
      * @dataProvider dataForOnPostCaseUnauthorized
      */
-    // phpcs:ignore PSR1.Methods.CamelCapsMethodName.NotCamelCaps
     public function testOnPostCaseUnauthorized(string $username, string $password): void
     {
         // 準備
+        $sessionHandlerStub = $this->createStub(SessionHandlerInterface::class);
+        $injector = Injector::getOverrideInstance('html-app', new class ($sessionHandlerStub) extends AbstractModule{
+            public function __construct(
+                private readonly SessionHandlerInterface $sessionHandlerStub
+            ) {
+                parent::__construct();
+            }
+
+            protected function configure(): void
+            {
+                $this->bind(SessionHandlerInterface::class)->toInstance($this->sessionHandlerStub);
+            }
+        });
+
+        $resource = $injector->getInstance(ResourceInterface::class);
+
         $expectedRedirectTo = '/index';
-        $resource = $this->injector->getInstance(ResourceInterface::class);
 
         // 実行
         $ro = $resource->post('page://self/login', ['username' => $username, 'password' => $password]);
 
         // 検証
         $this->assertSame(Code::SEE_OTHER, $ro->code);
+        $this->assertSame($expectedRedirectTo, $ro->headers['Location']);
 
         $htmlContents = $ro->toString();
         $this->assertNotEmpty($htmlContents);

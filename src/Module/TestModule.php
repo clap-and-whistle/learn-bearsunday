@@ -14,6 +14,10 @@ class TestModule extends AbstractModule
         $this->bind(SessionHandlerInterface::class)->toInstance($this->createDummySessionHandler());
     }
 
+    /**
+     * 正常系のワークフローテストのために、
+     * 「認証が済んでいることを前提とした応答しかしない」ような SessionHandlerInterface（を実装したクラスの）インスタンスを返す
+     */
     public function createDummySessionHandler(): SessionHandlerInterface
     {
         return new class implements SessionHandlerInterface {
@@ -21,7 +25,7 @@ class TestModule extends AbstractModule
 
             public function setAuth(string $uuid): void
             {
-                $this->message = $uuid;
+                $this->message = $uuid; // これはただのダミー処理。なんなら何もしなくても構わない。
             }
 
             public function isNotAuthorized(): bool
@@ -41,6 +45,10 @@ class TestModule extends AbstractModule
             public function getFlashMessage(string $key): ?string
             {
                 return empty($key) ? null : $this->message;
+            }
+
+            public function destroy(): void
+            {
             }
         };
     }

@@ -55,7 +55,7 @@
             "./vendor/bin/phpstan clear-result-cache",
             "./vendor/bin/psalm --clear-cache",
             "rm -rf ./var/tmp/*.php",
-            "rm -rf ./var/tmp/*/*"
+            "@twig-clean"
         ],
         "sa": [
             "./vendor/bin/psalm --show-info=true",

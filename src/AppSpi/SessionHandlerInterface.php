@@ -19,4 +19,6 @@ interface SessionHandlerInterface
     public function setFlashMessage(string $message, string $key): void;
 
     public function getFlashMessage(string $key): ?string;
+
+    public function destroy(): void;
 }

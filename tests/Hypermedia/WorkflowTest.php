@@ -7,11 +7,9 @@ namespace Cw\LearnBear\Hypermedia;
 use BEAR\Resource\Code;
 use BEAR\Resource\ResourceInterface;
 use BEAR\Resource\ResourceObject;
-use Cw\LearnBear\AppSpi\SessionHandlerInterface;
 use Cw\LearnBear\Injector;
 use DOMDocument;
 use PHPUnit\Framework\TestCase;
-use Ray\Di\AbstractModule;
 use RuntimeException;
 
 use function explode;
@@ -23,20 +21,9 @@ class WorkflowTest extends TestCase
 
     protected function setUp(): void
     {
-        $stubSession = $this->createStub(SessionHandlerInterface::class);
-        $stubSession->method('isNotAuthorized')->willReturn(false);
-        $injector = Injector::getOverrideInstance('html-app', new class ($stubSession) extends AbstractModule{
-            public function __construct(
-                private readonly SessionHandlerInterface $sessionHandlerStub
-            ) {
-                parent::__construct();
-            }
-
-            protected function configure(): void
-            {
-                $this->bind(SessionHandlerInterface::class)->toInstance($this->sessionHandlerStub);
-            }
-        });
+        // 下記の通り test-html-app コンテキストによるブートアップをしてるので、
+        // TestModule で SessionHandlerInterface はスタブ化済み。
+        $injector = Injector::getInstance('test-html-app');
         $this->resource = $injector->getInstance(ResourceInterface::class);
     }
 

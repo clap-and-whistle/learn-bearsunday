@@ -19,6 +19,7 @@ class IndexTest extends TestCase
 
     protected function setUp(): void
     {
+        Injector::getInstance('html-app')->getInstance(SessionHandlerInterface::class)->destroy();
         $this->expectedLinkDestination = "/{$this->linkKey}";
     }
 

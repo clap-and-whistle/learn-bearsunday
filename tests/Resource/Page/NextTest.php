@@ -14,25 +14,20 @@ use Ray\Di\AbstractModule;
 
 class NextTest extends TestCase
 {
-    private SessionHandlerInterface $stubSession;
     private string $linkKey = 'logout';
     private string $expectedLinkDestination;
 
     protected function setUp(): void
     {
-        $this->stubSession = $this->createStub(SessionHandlerInterface::class);
         $this->expectedLinkDestination = "/{$this->linkKey}";
     }
 
-    /**
-     * @psalm-suppress UndefinedInterfaceMethod
-     */
     public function testOnGetHtml(): void
     {
         // 準備
-        // @phpstan-ignore-next-line
-        $this->stubSession->method('isNotAuthorized')->willReturn(false);
-        $injector = Injector::getOverrideInstance('html-app', new class ($this->stubSession) extends AbstractModule{
+        $stubSession = $this->createStub(SessionHandlerInterface::class);
+        $stubSession->method('isNotAuthorized')->willReturn(false);
+        $injector = Injector::getOverrideInstance('html-app', new class ($stubSession) extends AbstractModule {
             public function __construct(
                 private readonly SessionHandlerInterface $sessionHandlerStub
             ) {
@@ -65,11 +60,7 @@ class NextTest extends TestCase
         $this->assertSame($this->expectedLinkDestination, $element->getAttribute('href'), 'リンク先が期待値と異なります');
     }
 
-    /**
-     * @noinspection NonAsciiCharacters
-     */
-    // phpcs:ignore PSR1.Methods.CamelCapsMethodName.NotCamelCaps
-    public function testOnGetHtml_未認証(): void
+    public function testOnGetHtmlCaseUnauthorized(): void
     {
         // 準備
         $injector = Injector::getInstance('html-app');
