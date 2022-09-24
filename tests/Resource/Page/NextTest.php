@@ -8,9 +8,12 @@ use BEAR\Resource\Code;
 use BEAR\Resource\ResourceInterface;
 use Cw\LearnBear\AppSpi\SessionHandlerInterface;
 use Cw\LearnBear\Injector;
+use Cw\LearnBear\Interceptor\AuthCheckInterceptor;
 use DOMDocument;
 use PHPUnit\Framework\TestCase;
 use Ray\Di\AbstractModule;
+
+use function json_decode;
 
 class NextTest extends TestCase
 {
@@ -19,7 +22,24 @@ class NextTest extends TestCase
 
     protected function setUp(): void
     {
+        Injector::getInstance('html-app')->getInstance(SessionHandlerInterface::class)->destroy();
         $this->expectedLinkDestination = "/{$this->linkKey}";
+    }
+
+    public function testOnGetApp(): void
+    {
+        // 準備
+        $injector = Injector::getInstance('app');
+        $resource = $injector->getInstance(ResourceInterface::class);
+
+        // 実行
+        $ro = $resource->get('page://self/next', ['year' => 2001, 'month' => 1, 'day' => 1]);
+
+        // 検証
+        $this->assertSame(Code::OK, $ro->code);
+        $json = json_decode((string) $ro);
+        $this->assertObjectHasAttribute('_links', $json);
+        $this->assertSame('/' . $this->linkKey, $json->_links->{$this->linkKey}->href);
     }
 
     public function testOnGetHtml(): void
@@ -70,12 +90,10 @@ class NextTest extends TestCase
         $ro = $resource->get('page://self/next', ['year' => 2001, 'month' => 1, 'day' => 1]);
 
         // 検証
+        $this->assertSame(Code::UNAUTHORIZED, $ro->code);
+
         $htmlContents = $ro->toString();
         $this->assertNotEmpty($htmlContents);
-
-        $dom = new DOMDocument();
-        $dom->loadHTML($htmlContents);
-
-        $this->assertSame(Code::UNAUTHORIZED, $ro->code);
+        $this->assertStringContainsString(AuthCheckInterceptor::AUTH_ERROR_MESSAGE, $htmlContents);
     }
 }

@@ -13,6 +13,8 @@ use DOMDocument;
 use PHPUnit\Framework\TestCase;
 use Ray\Di\AbstractModule;
 
+use function json_decode;
+
 class LoginTest extends TestCase
 {
     private string $linkKey = 'next';
@@ -28,6 +30,25 @@ class LoginTest extends TestCase
             'ユーザー名:hogetest' => ['username' => 'hogetest', 'password' => 'Fuga.1234'],
             'ユーザー名:piyotest' => ['username' => 'piyotest', 'password' => 'Fuga.1234'],
         ];
+    }
+
+    /**
+     * @dataProvider dataForOnPostHtml
+     */
+    public function testOnPostApp(string $username, string $password): void
+    {
+        // 準備
+        $injector = Injector::getInstance('app');
+        $resource = $injector->getInstance(ResourceInterface::class);
+
+        // 実行
+        $ro = $resource->post('page://self/login', ['username' => $username, 'password' => $password]);
+
+        // 検証
+        $this->assertSame(Code::SEE_OTHER, $ro->code);
+        $json = json_decode((string) $ro);
+        $this->assertObjectHasAttribute('_links', $json);
+        $this->assertStringContainsString('/' . $this->linkKey . '?', $json->_links->redirect->href);
     }
 
     /**

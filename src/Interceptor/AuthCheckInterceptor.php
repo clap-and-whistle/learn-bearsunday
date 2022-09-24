@@ -14,6 +14,8 @@ use function assert;
 
 class AuthCheckInterceptor implements MethodInterceptor
 {
+    public const AUTH_ERROR_MESSAGE = 'ユーザー認証をしてください';
+
     public function __construct(private readonly SessionHandlerInterface $cwSession)
     {
     }
@@ -49,7 +51,7 @@ class AuthCheckInterceptor implements MethodInterceptor
         $resourceObj->body = [
             'status' => [
                 'code' => $resourceObj->code,
-                'message' => 'ユーザー認証をしてください',
+                'message' => self::AUTH_ERROR_MESSAGE,
             ],
         ];
 

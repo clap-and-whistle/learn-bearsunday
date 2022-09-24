@@ -9,6 +9,7 @@ interface SessionHandlerInterface
     public const SESS_SEGMENT = self::class;
 
     public const FLASH_KEY_FOR_LOGIN_FORM = 'for_index';
+    public const DUMMY_MESSAGE = 'dummy';
 
     public function setAuth(string $uuid): void;
 
