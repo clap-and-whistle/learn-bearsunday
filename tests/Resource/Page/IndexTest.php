@@ -7,10 +7,12 @@ namespace Cw\LearnBear\Resource\Page;
 use BEAR\Resource\Code;
 use BEAR\Resource\ResourceInterface;
 use Cw\LearnBear\AppSpi\SessionHandlerInterface;
-use Cw\LearnBear\Resource\TestUtil\OverrideModule;
-use Cw\LearnBear\TestInjector;
+use Cw\LearnBear\Injector;
 use DOMDocument;
 use PHPUnit\Framework\TestCase;
+use Ray\Di\AbstractModule;
+
+use function json_decode;
 
 class IndexTest extends TestCase
 {
@@ -19,19 +21,33 @@ class IndexTest extends TestCase
 
     protected function setUp(): void
     {
+        Injector::getInstance('html-app')->getInstance(SessionHandlerInterface::class)->destroy();
         $this->expectedLinkDestination = "/{$this->linkKey}";
     }
 
-    protected function tearDown(): void
+    public function testOnGetApp(): void
     {
-        OverrideModule::cleanBinds();
-        parent::tearDown();
+        // 準備
+        $injector = Injector::getInstance('app');
+        $resource = $injector->getInstance(ResourceInterface::class);
+
+        // 実行
+        $ro = $resource->get('page://self/index');
+
+        // 検証
+        $this->assertSame(Code::OK, $ro->code);
+        $json = json_decode((string) $ro);
+        $this->assertObjectHasAttribute('flash_message', $json);
+        // phpcs:ignore Squiz.NamingConventions.ValidVariableName.MemberNotCamelCaps
+        $this->assertSame(SessionHandlerInterface::DUMMY_MESSAGE, $json->flash_message);
+        $this->assertObjectHasAttribute('_links', $json);
+        $this->assertSame('/' . $this->linkKey, $json->_links->{$this->linkKey}->href);
     }
 
     public function testOnGetHtml(): void
     {
         // 準備
-        $injector = TestInjector::getInstance('html-app');
+        $injector = Injector::getInstance('html-app');
         $resource = $injector->getInstance(ResourceInterface::class);
 
         // 実行
@@ -57,8 +73,19 @@ class IndexTest extends TestCase
         $expectedMessage = 'HTMLテストメッセージ';
         $sessionHandlerStub = $this->createStub(SessionHandlerInterface::class);
         $sessionHandlerStub->method('getFlashMessage')->willReturn($expectedMessage);
-        OverrideModule::addOrOverrideBind(SessionHandlerInterface::class, $sessionHandlerStub);
-        $injector = TestInjector::getOverrideInstance('html-app', new OverrideModule());
+        $injector = Injector::getOverrideInstance('html-app', new class ($sessionHandlerStub) extends AbstractModule{
+            public function __construct(
+                private readonly SessionHandlerInterface $sessionHandlerStub
+            ) {
+                parent::__construct();
+            }
+
+            protected function configure(): void
+            {
+                $this->bind(SessionHandlerInterface::class)->toInstance($this->sessionHandlerStub);
+            }
+        });
+
         $resource = $injector->getInstance(ResourceInterface::class);
 
         // 実行

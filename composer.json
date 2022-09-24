@@ -38,9 +38,12 @@
     },
     "scripts": {
         "post-update-cmd": "@setup",
-        "post-install-cmd": "@composer bin all install --ansi",
+        "post-install-cmd": [
+            "@composer bin all install --ansi",
+            "@setup"
+        ],
         "setup": "php bin/setup.php",
-        "compile": "./vendor/bin/bear.compile 'Cw\\LearnBear' prod-app ./",
+        "compile": "./vendor/bin/bear.compile 'Cw\\LearnBear' prod-html-app ./",
         "doc": "./vendor/bin/apidoc",
         "test": "./vendor/bin/phpunit",
         "coverage": "php -dzend_extension=xdebug.so -dxdebug.mode=coverage ./vendor/bin/phpunit --coverage-text --coverage-html=build/coverage",
@@ -48,14 +51,12 @@
         "cs": "./vendor/bin/phpcs",
         "cs-fix": "./vendor/bin/phpcbf src tests",
         "metrics": "./vendor/bin/phpmetrics --report-html=build/metrics --exclude=Exception src",
-        "twig-clean": [
-            "rm -rf ./var/tmp/*/twig/*"
-        ],
+        "twig-clean": "rm -rf ./var/tmp/*/twig/*",
         "clean": [
             "./vendor/bin/phpstan clear-result-cache",
             "./vendor/bin/psalm --clear-cache",
             "rm -rf ./var/tmp/*.php",
-            "rm -rf ./var/tmp/*/*"
+            "@twig-clean"
         ],
         "sa": [
             "./vendor/bin/psalm --show-info=true",
@@ -65,10 +66,12 @@
         "tests": [
             "@cs",
             "@sa",
+            "@setup",
             "@test"
         ],
         "build": [
             "@clean",
+            "@setup",
             "@cs",
             "@sa",
             "@pcov",
@@ -91,6 +94,7 @@
         "cs-fix": "Fix the coding standard",
         "sa": "Run static analysis",
         "metrics": "Build metrics report",
+        "twig-clean": "Clear twig cache files",
         "clean": "Clear cache files",
         "serve": "Start built-in server",
         "app": "Request app resource",

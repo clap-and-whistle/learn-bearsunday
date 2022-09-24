@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Cw\LearnBear\Infrastructure\Authentication;
 
 use Aura\Session\Segment;
+use Aura\Session\Session;
 use Aura\Session\SessionFactory;
 use Aura\Web\WebFactory;
 use Cw\LearnBear\AppSpi\LoggerInterface;
@@ -12,6 +13,7 @@ use Cw\LearnBear\AppSpi\SessionHandlerInterface;
 
 class CwSession implements SessionHandlerInterface
 {
+    private readonly Session $session;
     private readonly Segment $segment;
 
     /**
@@ -19,10 +21,10 @@ class CwSession implements SessionHandlerInterface
      */
     public function __construct(private readonly LoggerInterface $logger)
     {
-        $session = (new SessionFactory())->newInstance(
+        $this->session = (new SessionFactory())->newInstance(
             (new WebFactory($GLOBALS))->newRequest()->cookies->getArrayCopy()
         );
-        $this->segment = $session->getSegment(self::SESS_SEGMENT);
+        $this->segment = $this->session->getSegment(self::SESS_SEGMENT);
     }
 
     public function setAuth(string $uuid): void
@@ -53,5 +55,14 @@ class CwSession implements SessionHandlerInterface
         $this->segment->clearFlash();
 
         return $message;
+    }
+
+    public function destroy(): void
+    {
+        if (! $this->session->isStarted()) {
+            return;
+        }
+
+        $this->session->destroy();
     }
 }

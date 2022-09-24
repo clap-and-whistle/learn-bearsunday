@@ -7,39 +7,59 @@ namespace Cw\LearnBear\Resource\Page;
 use BEAR\Resource\Code;
 use BEAR\Resource\ResourceInterface;
 use Cw\LearnBear\AppSpi\SessionHandlerInterface;
-use Cw\LearnBear\Resource\TestUtil\OverrideModule;
-use Cw\LearnBear\TestInjector;
+use Cw\LearnBear\Injector;
+use Cw\LearnBear\Interceptor\AuthCheckInterceptor;
 use DOMDocument;
 use PHPUnit\Framework\TestCase;
+use Ray\Di\AbstractModule;
+
+use function json_decode;
 
 class NextTest extends TestCase
 {
-    private SessionHandlerInterface $stubSession;
     private string $linkKey = 'logout';
     private string $expectedLinkDestination;
 
     protected function setUp(): void
     {
-        $this->stubSession = $this->createStub(SessionHandlerInterface::class);
+        Injector::getInstance('html-app')->getInstance(SessionHandlerInterface::class)->destroy();
         $this->expectedLinkDestination = "/{$this->linkKey}";
     }
 
-    protected function tearDown(): void
+    public function testOnGetApp(): void
     {
-        OverrideModule::cleanBinds();
-        parent::tearDown();
+        // 準備
+        $injector = Injector::getInstance('app');
+        $resource = $injector->getInstance(ResourceInterface::class);
+
+        // 実行
+        $ro = $resource->get('page://self/next', ['year' => 2001, 'month' => 1, 'day' => 1]);
+
+        // 検証
+        $this->assertSame(Code::OK, $ro->code);
+        $json = json_decode((string) $ro);
+        $this->assertObjectHasAttribute('_links', $json);
+        $this->assertSame('/' . $this->linkKey, $json->_links->{$this->linkKey}->href);
     }
 
-    /**
-     * @psalm-suppress UndefinedInterfaceMethod
-     */
     public function testOnGetHtml(): void
     {
         // 準備
-        // @phpstan-ignore-next-line
-        $this->stubSession->method('isNotAuthorized')->willReturn(false);
-        OverrideModule::addOrOverrideBind(SessionHandlerInterface::class, $this->stubSession);
-        $injector = TestInjector::getOverrideInstance('html-app', new OverrideModule());
+        $stubSession = $this->createStub(SessionHandlerInterface::class);
+        $stubSession->method('isNotAuthorized')->willReturn(false);
+        $injector = Injector::getOverrideInstance('html-app', new class ($stubSession) extends AbstractModule {
+            public function __construct(
+                private readonly SessionHandlerInterface $sessionHandlerStub
+            ) {
+                parent::__construct();
+            }
+
+            protected function configure(): void
+            {
+                $this->bind(SessionHandlerInterface::class)->toInstance($this->sessionHandlerStub);
+            }
+        });
+
         $resource = $injector->getInstance(ResourceInterface::class);
 
         // 実行
@@ -60,26 +80,20 @@ class NextTest extends TestCase
         $this->assertSame($this->expectedLinkDestination, $element->getAttribute('href'), 'リンク先が期待値と異なります');
     }
 
-    /**
-     * @noinspection NonAsciiCharacters
-     */
-    // phpcs:ignore PSR1.Methods.CamelCapsMethodName.NotCamelCaps
-    public function testOnGetHtml_未認証(): void
+    public function testOnGetHtmlCaseUnauthorized(): void
     {
         // 準備
-        $injector = TestInjector::getInstance('html-app');
+        $injector = Injector::getInstance('html-app');
         $resource = $injector->getInstance(ResourceInterface::class);
 
         // 実行
         $ro = $resource->get('page://self/next', ['year' => 2001, 'month' => 1, 'day' => 1]);
 
         // 検証
+        $this->assertSame(Code::UNAUTHORIZED, $ro->code);
+
         $htmlContents = $ro->toString();
         $this->assertNotEmpty($htmlContents);
-
-        $dom = new DOMDocument();
-        $dom->loadHTML($htmlContents);
-
-        $this->assertSame(Code::UNAUTHORIZED, $ro->code);
+        $this->assertStringContainsString(AuthCheckInterceptor::AUTH_ERROR_MESSAGE, $htmlContents);
     }
 }
