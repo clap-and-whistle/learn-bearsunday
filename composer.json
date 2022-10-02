@@ -66,7 +66,6 @@
         "tests": [
             "@cs",
             "@sa",
-            "@setup",
             "@test"
         ],
         "build": [
