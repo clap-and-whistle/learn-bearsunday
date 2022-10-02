@@ -13,13 +13,6 @@ if (! file_exists(dirname(__DIR__) . '/var/db/todo.sqlite3')) {
     chdir(dirname(__DIR__));
 }
 
-// note: ./var/tmp/ を空っぽにした直後の状態で composer test するとなぜか束縛の差し替えが期待通り動かないが、
-//       連続して2回目の composer test を実行すると束縛の差し替えが効くようになる（この挙動の原因の究明はできていない）。
-//       そこで、この setup.php の中で1回目の「失敗する composer test」を済ませておくことにしたのが下記の行。
-echo '    phpunit を実行しています（結果の出力内容はすべて捨てられます）' . PHP_EOL;
-passthru('php -dextension=pcov.so -d pcov.enabled=1 ./vendor/bin/phpunit --stderr 2>/dev/null');
-passthru('rm ./.phpunit.result.cache');
-
 // プロジェクトルートに autoload.php が無ければ生成
 chdir(dirname(__DIR__));
 if (! file_exists('./autoload.php')) {
